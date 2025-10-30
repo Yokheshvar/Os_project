@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paging Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🖥️ Paging Simulator</h1>
+            <p>Interactive OS Memory Management Visualization</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <h2>Configuration</h2>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="physicalMem">Physical Memory Size (bytes):</label>
+                        <input type="number" id="physicalMem" value="4096" min="1024" step="1024">
+                    </div>
+                    <div class="input-group">
+                        <label for="logicalAddr">Logical Address Size (bits):</label>
+                        <input type="number" id="logicalAddr" value="12" min="8" max="32">
+                    </div>
+                    <div class="input-group">
+                        <label for="pageSize">Page Size (bytes):</label>
+                        <input type="number" id="pageSize" value="64" min="16" step="16">
+                    </div>
+                    <div class="input-group">
+                        <label for="numProcesses">Number of Processes:</label>
+                        <input type="number" id="numProcesses" value="3" min="1" max="10">
+                    </div>
+                </div>
+
+                <div class="process-config">
+                    <h3>Process Configuration</h3>
+                    <div id="processInputs"></div>
+                </div>
+
+                <div class="button-group">
+                    <button onclick="generateProcessInputs()">Generate Process Fields</button>
+                    <button onclick="runSimulation()" class="primary">Run Simulation</button>
+                    <button onclick="clearResults()">Clear Results</button>
+                </div>
+            </section>
+
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <h2>Simulation Results</h2>
+                
+                <div class="summary-cards">
+                    <div class="card">
+                        <h3>Memory Configuration</h3>
+                        <div id="memoryConfig"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Fragmentation</h3>
+                        <div id="fragmentationInfo"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Free Frames</h3>
+                        <div id="freeFramesInfo"></div>
+                    </div>
+                </div>
+
+                <div class="visualization">
+                    <h3>Memory Visualization</h3>
+                    <div id="memoryVisualization"></div>
+                </div>
+
+                <div class="process-details">
+                    <h3>Process Details</h3>
+                    <div id="processDetails"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Verify script loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('HTML DOM loaded');
+            
+            // Check if functions are available
+            const requiredFunctions = ['generateProcessInputs', 'runSimulation', 'clearResults'];
+            let allFunctionsLoaded = true;
+            
+            requiredFunctions.forEach(funcName => {
+                if (typeof window[funcName] !== 'function') {
+                    console.error(`Function ${funcName} not loaded!`);
+                    allFunctionsLoaded = false;
+                } else {
+                    console.log(`Function ${funcName} loaded successfully`);
+                }
+            });
+            
+            if (allFunctionsLoaded) {
+                console.log('✅ All functions loaded successfully');
+            } else {
+                console.error('❌ Some functions failed to load');
+                alert('Error: Some functions failed to load. Please check the console for details.');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# Compiled executables
+*.exe
+*.out
+paging
+process_generator
+
+# Object files
+*.o
+*.obj
+
+# Process files (generated)
+*.proc
+*.txt
+temp_process_*.proc
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE files
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build artifacts
+build/
+dist/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
