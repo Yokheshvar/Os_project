@@ -21,20 +21,21 @@ class PagingSimulatorHandler(http.server.SimpleHTTPRequestHandler):
             self.path = '/ui/styles.css'
         elif self.path == '/script.js':
             self.path = '/ui/script.js'
-        # Add CORS headers
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         return super().do_GET()
     
     def do_OPTIONS(self):
-        # Handle preflight requests
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
+    
+    def end_headers(self):
+        # Add CORS headers to all responses
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        super().end_headers()
     
     def do_POST(self):
         if self.path == '/api/simulate':
@@ -58,6 +59,11 @@ class PagingSimulatorHandler(http.server.SimpleHTTPRequestHandler):
             # Run the C simulator
             result = self.run_c_simulator(config, process_files)
             
+            # Add code and data sizes to each process from config
+            for i, process in enumerate(result['processes']):
+                result['processes'][i]['codeSize'] = config['processes'][i]['codeSize']
+                result['processes'][i]['dataSize'] = config['processes'][i]['dataSize']
+            
             # Clean up temporary files
             for filename in process_files:
                 try:
@@ -68,18 +74,12 @@ class PagingSimulatorHandler(http.server.SimpleHTTPRequestHandler):
             # Send response
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
             self.end_headers()
             self.wfile.write(json.dumps(result).encode())
             
         except Exception as e:
             self.send_response(500)
             self.send_header('Content-type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
             self.end_headers()
             error_response = {'error': str(e)}
             self.wfile.write(json.dumps(error_response).encode())
@@ -251,14 +251,14 @@ def main():
     # Start the server on the available port
     try:
         with socketserver.TCPServer(("", available_port), PagingSimulatorHandler) as httpd:
-            print(f"🚀 Paging Simulator UI running at http://localhost:{available_port}")
-            print(f"📁 Serving files from: {os.getcwd()}")
+            print(f"Paging Simulator UI running at http://localhost:{available_port}")
+            print(f"Serving files from: {os.getcwd()}")
             print("Press Ctrl+C to stop the server")
             
             try:
                 httpd.serve_forever()
             except KeyboardInterrupt:
-                print("\n👋 Server stopped")
+                print("\nServer stopped")
     except Exception as e:
         print(f"Error starting server: {e}")
         return
