@@ -213,6 +213,9 @@ class PagingSimulatorHandler(http.server.SimpleHTTPRequestHandler):
                 internal_fragmentation = int(line.split('Total Internal Fragmentation: ')[1].split(' bytes')[0])
                 break
         
+        # Calculate calculation data for display
+        calculations = self.calculate_values(config, processes, internal_fragmentation, num_frames)
+        
         return {
             'config': config,
             'numFrames': num_frames,
@@ -220,7 +223,139 @@ class PagingSimulatorHandler(http.server.SimpleHTTPRequestHandler):
             'freeFrames': free_frames,
             'internalFragmentation': internal_fragmentation,
             'processes': processes,
+            'calculations': calculations,
             'rawOutput': output  # Include the raw C simulator output
+        }
+    
+    def calculate_values(self, config, processes, internal_fragmentation, num_frames):
+        """Calculate all values needed for the calculations display"""
+        import math
+        
+        physical_mem_size = config['physicalMemSize']
+        page_size = config['pageSize']
+        logical_addr_size = config['logicalAddrSize']
+        
+        # Memory configuration calculations
+        offset_bits = int(math.log2(page_size))
+        page_bits = logical_addr_size - offset_bits
+        max_pages = 2 ** page_bits if page_bits > 0 else 0
+        
+        memory_calc = {
+            'numFrames': {
+                'formula': f'Number of Frames = Physical Memory Size ÷ Page Size',
+                'calculation': f'{physical_mem_size} bytes ÷ {page_size} bytes',
+                'result': f'{num_frames} frames'
+            },
+            'offsetBits': {
+                'formula': f'Offset Bits = log₂(Page Size)',
+                'calculation': f'log₂({page_size})',
+                'result': f'{offset_bits} bits'
+            },
+            'pageBits': {
+                'formula': f'Page Number Bits = Logical Address Size - Offset Bits',
+                'calculation': f'{logical_addr_size} bits - {offset_bits} bits',
+                'result': f'{page_bits} bits'
+            },
+            'maxPages': {
+                'formula': f'Maximum Pages = 2^(Page Number Bits)',
+                'calculation': f'2^{page_bits}',
+                'result': f'{max_pages} pages'
+            }
+        }
+        
+        # Process calculations
+        process_calculations = []
+        for process in processes:
+            proc_size = process['procSize']
+            num_pages = process['numPages']  # Use the actual number from the simulator
+            
+            # Calculate fragmentation for this process
+            # Each page that's not fully used contributes to fragmentation
+            pages_used = num_pages
+            space_used = pages_used * page_size
+            fragmentation = space_used - proc_size
+            
+            process_calc = {
+                'processId': process['id'],
+                'processSize': {
+                    'formula': f'Process Size = Code Size + Data Size',
+                    'calculation': f'{process.get("codeSize", 0)} + {process.get("dataSize", 0)}',
+                    'result': f'{proc_size} bytes'
+                },
+                'numPages': {
+                    'formula': f'Number of Pages = ⌈Process Size ÷ Page Size⌉',
+                    'calculation': f'⌈{proc_size} ÷ {page_size}⌉',
+                    'result': f'{num_pages} pages'
+                },
+                'fragmentation': {
+                    'formula': f'Internal Fragmentation = (Pages × Page Size) - Process Size',
+                    'calculation': f'({num_pages} × {page_size}) - {proc_size}',
+                    'result': f'{fragmentation} bytes'
+                }
+            }
+            process_calculations.append(process_calc)
+        
+        # Fragmentation calculations
+        total_used_memory = sum(p['procSize'] for p in processes)
+        total_allocated_memory = sum(math.ceil(p['procSize'] / page_size) * page_size for p in processes) if page_size > 0 else 0
+        total_fragmentation = total_allocated_memory - total_used_memory
+        
+        fragmentation_calc = {
+            'totalUsed': {
+                'formula': 'Total Used Memory = Sum of all Process Sizes',
+                'calculation': ' + '.join([f'{p["procSize"]}' for p in processes]) if processes else '0',
+                'result': f'{total_used_memory} bytes'
+            },
+            'totalAllocated': {
+                'formula': 'Total Allocated Memory = Sum of (Pages × Page Size) for all processes',
+                'calculation': ' + '.join([f'({math.ceil(p["procSize"]/page_size)} × {page_size})' for p in processes]) if processes else '0',
+                'result': f'{total_allocated_memory} bytes'
+            },
+            'totalFragmentation': {
+                'formula': 'Total Internal Fragmentation = Total Allocated - Total Used',
+                'calculation': f'{total_allocated_memory} - {total_used_memory}',
+                'result': f'{total_fragmentation} bytes'
+            },
+            'utilization': {
+                'formula': 'Memory Utilization = (Total Used Memory ÷ Physical Memory Size) × 100%',
+                'calculation': f'({total_used_memory} ÷ {physical_mem_size}) × 100%',
+                'result': f'{(total_used_memory / physical_mem_size * 100) if physical_mem_size > 0 else 0:.2f}%'
+            }
+        }
+        
+        # Address translation example (using first process)
+        address_translation_calc = None
+        if processes and processes[0]['pageTable']:
+            first_entry = processes[0]['pageTable'][0]
+            example_page = first_entry['pageNumber']
+            example_frame = first_entry['frameNumber']
+            example_offset = page_size // 4
+            logical_addr = (example_page << offset_bits) + example_offset
+            physical_addr = (example_frame * page_size) + example_offset
+            
+            address_translation_calc = {
+                'logicalAddress': {
+                    'formula': f'Logical Address = (Page Number × 2^(Offset Bits)) + Offset',
+                    'calculation': f'({example_page} × 2^{offset_bits}) + {example_offset}',
+                    'result': f'{logical_addr} (binary: {logical_addr:b})'
+                },
+                'pageLookup': {
+                    'formula': 'Page Table Lookup',
+                    'calculation': f'Page {example_page} → Frame {example_frame}',
+                    'result': 'Frame found'
+                },
+                'physicalAddress': {
+                    'formula': f'Physical Address = (Frame Number × Page Size) + Offset',
+                    'calculation': f'({example_frame} × {page_size}) + {example_offset}',
+                    'result': f'{physical_addr} (0x{physical_addr:X})'
+                }
+            }
+        
+        return {
+            'memory': memory_calc,
+            'processes': process_calculations,
+            'fragmentation': fragmentation_calc,
+            'addressTranslation': address_translation_calc
         }
 
 def main():

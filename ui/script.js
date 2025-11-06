@@ -195,8 +195,17 @@ function displayResults(results) {
                             <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <h3>Memory Configuration</h3>
+                    <div class="card-header-with-dropdown">
+                        <h3>Memory Configuration</h3>
+                        <button class="btn btn-secondary btn-sm calc-toggle-btn" onclick="toggleCalculations('memoryConfig')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path id="calcIcon-memoryConfig" d="M5 12L10 8L5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Show Calculations</span>
+                        </button>
+                    </div>
                     <div id="memoryConfig" class="card-content"></div>
+                    <div id="memoryConfig-calculations" class="calculations-container" style="display: none;"></div>
                 </div>
                 <div class="summary-card">
                     <div class="card-icon-wrapper">
@@ -205,9 +214,18 @@ function displayResults(results) {
                             <path d="M3 9H21M9 3V21" stroke="currentColor" stroke-width="2"/>
                         </svg>
                     </div>
-                    <h3>Fragmentation</h3>
+                    <div class="card-header-with-dropdown">
+                        <h3>Fragmentation</h3>
+                        <button class="calc-toggle-btn" onclick="toggleCalculations('fragmentation')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path id="calcIcon-fragmentation" d="M5 12L10 8L5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Show Calculations</span>
+                        </button>
+                    </div>
                     <div id="fragmentationInfo" class="card-content"></div>
                     <div id="fragmentationChart" class="fragmentation-chart"></div>
+                    <div id="fragmentation-calculations" class="calculations-container" style="display: none;"></div>
                 </div>
                 <div class="summary-card">
                     <div class="card-icon-wrapper">
@@ -233,12 +251,29 @@ function displayResults(results) {
             </div>
 
             <div class="translation-section">
-                <h3>Address Translation Example</h3>
+                <div class="section-header-with-dropdown">
+                    <div>
+                        <h3>Address Translation Example</h3>
+                        <p class="section-description">Demonstration of logical to physical address translation</p>
+                    </div>
+                    <button class="calc-toggle-btn" onclick="toggleCalculations('addressTranslation')">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path id="calcIcon-addressTranslation" d="M5 12L10 8L5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Show Calculations</span>
+                    </button>
+                </div>
                 <div id="translationDemo" class="translation-demo"></div>
+                <div id="addressTranslation-calculations" class="calculations-container" style="display: none;"></div>
             </div>
 
             <div class="details-section">
-                <h3>Process Details</h3>
+                <div class="section-header-with-dropdown">
+                    <div>
+                        <h3>Process Details</h3>
+                        <p class="section-description">Page table mappings and process information</p>
+                    </div>
+                </div>
                 <div id="processDetails" class="process-details-container"></div>
             </div>
 
@@ -295,6 +330,11 @@ function displayResults(results) {
             <span class="info-value">${results.numFrames}</span>
         </div>
     `;
+    
+    // Display memory configuration calculations
+    if (results.calculations && results.calculations.memory) {
+        displayMemoryCalculations(results.calculations.memory);
+    }
 
     // Display fragmentation info
     const fragmentationInfo = document.getElementById('fragmentationInfo');
@@ -309,6 +349,11 @@ function displayResults(results) {
                         <span class="info-value">${calculateUtilization(results)}%</span>
         </div>
     `;
+    }
+    
+    // Display fragmentation calculations
+    if (results.calculations && results.calculations.fragmentation) {
+        displayFragmentationCalculations(results.calculations.fragmentation);
     }
 
     // Display free frames - check if element exists
@@ -382,12 +427,17 @@ function displayResults(results) {
 
     // Display address translation demo
     displayAddressTranslation(results);
+    
+    // Display address translation calculations
+    if (results.calculations && results.calculations.addressTranslation) {
+        displayAddressTranslationCalculations(results.calculations.addressTranslation);
+    }
 
     // Display process details
     const processDetails = document.getElementById('processDetails');
     if (processDetails) {
         processDetails.innerHTML = '';
-        results.processes.forEach(process => {
+        results.processes.forEach((process, index) => {
             const processCard = document.createElement('div');
             processCard.className = 'process-card';
             
@@ -398,9 +448,22 @@ function displayResults(results) {
                 </div>
             `).join('');
 
+            // Find process calculations
+            const processCalc = results.calculations && results.calculations.processes 
+                ? results.calculations.processes.find(p => p.processId === process.id)
+                : null;
+
             processCard.innerHTML = `
                 <div class="process-header">
                     <div class="process-title">Process ${process.id} (PID: ${process.pid})</div>
+                    ${processCalc ? `
+                        <button class="calc-toggle-btn" onclick="toggleProcessCalculations(${process.id})">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path id="calcIcon-process${process.id}" d="M5 12L10 8L5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Show Calculations</span>
+                        </button>
+                    ` : ''}
                 </div>
                 <div class="process-info">
                     <div class="info-item">
@@ -426,8 +489,16 @@ function displayResults(results) {
                         ${pageEntries}
                     </div>
                 </div>
+                ${processCalc ? `
+                    <div id="process${process.id}-calculations" class="calculations-container" style="display: none;"></div>
+                ` : ''}
             `;
             processDetails.appendChild(processCard);
+            
+            // Display process calculations if available
+            if (processCalc) {
+                displayProcessCalculations(process.id, processCalc);
+            }
         });
     }
 
@@ -719,6 +790,190 @@ Size: ${formatBytes(config.pageSize)}
     
     document.body.appendChild(modal);
     setTimeout(() => modal.classList.add('show'), 10);
+}
+
+// Calculation display functions
+function displayMemoryCalculations(memoryCalc) {
+    const container = document.getElementById('memoryConfig-calculations');
+    if (!container || !memoryCalc) return;
+    
+    container.innerHTML = `
+        <div class="calculation-group">
+            <h4>Number of Frames</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${memoryCalc.numFrames.formula}</div>
+                <div class="calc-calculation">${memoryCalc.numFrames.calculation}</div>
+                <div class="calc-result">= ${memoryCalc.numFrames.result}</div>
+            </div>
+        </div>
+        <div class="calculation-group">
+            <h4>Offset Bits</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${memoryCalc.offsetBits.formula}</div>
+                <div class="calc-calculation">${memoryCalc.offsetBits.calculation}</div>
+                <div class="calc-result">= ${memoryCalc.offsetBits.result}</div>
+            </div>
+        </div>
+        <div class="calculation-group">
+            <h4>Page Number Bits</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${memoryCalc.pageBits.formula}</div>
+                <div class="calc-calculation">${memoryCalc.pageBits.calculation}</div>
+                <div class="calc-result">= ${memoryCalc.pageBits.result}</div>
+            </div>
+        </div>
+        <div class="calculation-group">
+            <h4>Maximum Pages</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${memoryCalc.maxPages.formula}</div>
+                <div class="calc-calculation">${memoryCalc.maxPages.calculation}</div>
+                <div class="calc-result">= ${memoryCalc.maxPages.result}</div>
+            </div>
+        </div>
+    `;
+}
+
+function displayFragmentationCalculations(fragCalc) {
+    const container = document.getElementById('fragmentation-calculations');
+    if (!container || !fragCalc) return;
+    
+    container.innerHTML = `
+        <div class="calculation-group">
+            <h4>Total Used Memory</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${fragCalc.totalUsed.formula}</div>
+                <div class="calc-calculation">${fragCalc.totalUsed.calculation}</div>
+                <div class="calc-result">= ${fragCalc.totalUsed.result}</div>
+            </div>
+        </div>
+        <div class="calculation-group">
+            <h4>Total Allocated Memory</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${fragCalc.totalAllocated.formula}</div>
+                <div class="calc-calculation">${fragCalc.totalAllocated.calculation}</div>
+                <div class="calc-result">= ${fragCalc.totalAllocated.result}</div>
+            </div>
+        </div>
+        <div class="calculation-group">
+            <h4>Total Internal Fragmentation</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${fragCalc.totalFragmentation.formula}</div>
+                <div class="calc-calculation">${fragCalc.totalFragmentation.calculation}</div>
+                <div class="calc-result">= ${fragCalc.totalFragmentation.result}</div>
+            </div>
+        </div>
+        <div class="calculation-group">
+            <h4>Memory Utilization</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${fragCalc.utilization.formula}</div>
+                <div class="calc-calculation">${fragCalc.utilization.calculation}</div>
+                <div class="calc-result">= ${fragCalc.utilization.result}</div>
+            </div>
+        </div>
+    `;
+}
+
+function displayProcessCalculations(processId, processCalc) {
+    const container = document.getElementById(`process${processId}-calculations`);
+    if (!container || !processCalc) return;
+    
+    container.innerHTML = `
+        <div class="calculation-group">
+            <h4>Process Size</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${processCalc.processSize.formula}</div>
+                <div class="calc-calculation">${processCalc.processSize.calculation}</div>
+                <div class="calc-result">= ${processCalc.processSize.result}</div>
+            </div>
+        </div>
+        <div class="calculation-group">
+            <h4>Number of Pages</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${processCalc.numPages.formula}</div>
+                <div class="calc-calculation">${processCalc.numPages.calculation}</div>
+                <div class="calc-result">= ${processCalc.numPages.result}</div>
+            </div>
+        </div>
+        <div class="calculation-group">
+            <h4>Internal Fragmentation</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${processCalc.fragmentation.formula}</div>
+                <div class="calc-calculation">${processCalc.fragmentation.calculation}</div>
+                <div class="calc-result">= ${processCalc.fragmentation.result}</div>
+            </div>
+        </div>
+    `;
+}
+
+function displayAddressTranslationCalculations(addrCalc) {
+    const container = document.getElementById('addressTranslation-calculations');
+    if (!container || !addrCalc) return;
+    
+    container.innerHTML = `
+        <div class="calculation-group">
+            <h4>Logical Address Calculation</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${addrCalc.logicalAddress.formula}</div>
+                <div class="calc-calculation">${addrCalc.logicalAddress.calculation}</div>
+                <div class="calc-result">= ${addrCalc.logicalAddress.result}</div>
+            </div>
+        </div>
+        <div class="calculation-group">
+            <h4>Page Table Lookup</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${addrCalc.pageLookup.formula}</div>
+                <div class="calc-calculation">${addrCalc.pageLookup.calculation}</div>
+                <div class="calc-result">${addrCalc.pageLookup.result}</div>
+            </div>
+        </div>
+        <div class="calculation-group">
+            <h4>Physical Address Calculation</h4>
+            <div class="calc-item">
+                <div class="calc-formula">${addrCalc.physicalAddress.formula}</div>
+                <div class="calc-calculation">${addrCalc.physicalAddress.calculation}</div>
+                <div class="calc-result">= ${addrCalc.physicalAddress.result}</div>
+            </div>
+        </div>
+    `;
+}
+
+// Toggle calculation displays
+function toggleCalculations(sectionId) {
+    const container = document.getElementById(`${sectionId}-calculations`);
+    const iconPath = document.getElementById(`calcIcon-${sectionId}`);
+    
+    if (!container) return;
+    
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        if (iconPath) {
+            iconPath.setAttribute('d', 'M5 4L10 8L5 12');
+        }
+    } else {
+        container.style.display = 'none';
+        if (iconPath) {
+            iconPath.setAttribute('d', 'M5 12L10 8L5 4');
+        }
+    }
+}
+
+function toggleProcessCalculations(processId) {
+    const container = document.getElementById(`process${processId}-calculations`);
+    const iconPath = document.getElementById(`calcIcon-process${processId}`);
+    
+    if (!container) return;
+    
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        if (iconPath) {
+            iconPath.setAttribute('d', 'M5 4L10 8L5 12');
+        }
+    } else {
+        container.style.display = 'none';
+        if (iconPath) {
+            iconPath.setAttribute('d', 'M5 12L10 8L5 4');
+        }
+    }
 }
 
 // Initialize the page

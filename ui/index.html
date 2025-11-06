@@ -109,8 +109,17 @@
                                 <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </div>
-                        <h3>Memory Configuration</h3>
+                        <div class="card-header-with-dropdown">
+                            <h3>Memory Configuration</h3>
+                            <button class="btn btn-secondary btn-sm calc-toggle-btn" onclick="toggleCalculations('memoryConfig')">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path id="calcIcon-memoryConfig" d="M5 12L10 8L5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>Show Calculations</span>
+                            </button>
+                        </div>
                         <div id="memoryConfig" class="card-content"></div>
+                        <div id="memoryConfig-calculations" class="calculations-container" style="display: none;"></div>
                     </div>
                     <div class="summary-card">
                         <div class="card-icon-wrapper">
@@ -119,9 +128,18 @@
                                 <path d="M3 9H21M9 3V21" stroke="currentColor" stroke-width="2"/>
                             </svg>
                         </div>
-                        <h3>Fragmentation</h3>
+                        <div class="card-header-with-dropdown">
+                            <h3>Fragmentation</h3>
+                            <button class="btn btn-secondary btn-sm calc-toggle-btn" onclick="toggleCalculations('fragmentation')">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path id="calcIcon-fragmentation" d="M5 12L10 8L5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>Show Calculations</span>
+                            </button>
+                        </div>
                         <div id="fragmentationInfo" class="card-content"></div>
                         <div id="fragmentationChart" class="fragmentation-chart"></div>
+                        <div id="fragmentation-calculations" class="calculations-container" style="display: none;"></div>
                     </div>
                     <div class="summary-card">
                         <div class="card-icon-wrapper">
@@ -149,15 +167,30 @@
 
                 <!-- Address Translation -->
                 <div class="translation-section">
-                    <h3>Address Translation Example</h3>
-                    <p class="section-description">Demonstration of logical to physical address translation</p>
+                    <div class="section-header-with-dropdown">
+                        <div>
+                            <h3>Address Translation Example</h3>
+                            <p class="section-description">Demonstration of logical to physical address translation</p>
+                        </div>
+                        <button class="btn btn-secondary btn-sm calc-toggle-btn" onclick="toggleCalculations('addressTranslation')">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path id="calcIcon-addressTranslation" d="M5 12L10 8L5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Show Calculations</span>
+                        </button>
+                    </div>
                     <div id="translationDemo" class="translation-demo"></div>
+                    <div id="addressTranslation-calculations" class="calculations-container" style="display: none;"></div>
                 </div>
 
                 <!-- Process Details -->
                 <div class="details-section">
-                    <h3>Process Details</h3>
-                    <p class="section-description">Page table mappings and process information</p>
+                    <div class="section-header-with-dropdown">
+                        <div>
+                            <h3>Process Details</h3>
+                            <p class="section-description">Page table mappings and process information</p>
+                        </div>
+                    </div>
                     <div id="processDetails" class="process-details-container"></div>
                 </div>
 
